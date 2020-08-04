@@ -1,9 +1,12 @@
-import { resolve } from 'path'
-import etag from 'etag'
+const { resolve } = require('path')
+const etag = require('etag')
 
-const debug = process.env.DEBUG ? (url, ...args) => { console.log(`[${url}]`, ...args) } : () => { }
+const debug = process.env.DEBUG ? (url, ...args) => {
+  // eslint-disable-next-line no-console
+  console.log(`[${url}]`, ...args)
+} : () => { }
 
-export default function () {
+module.exports = function () {
   // route => { url, date, strategy, hash, html, stale }
   const cacheItems = {}
 

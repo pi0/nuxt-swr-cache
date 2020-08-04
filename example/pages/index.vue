@@ -4,7 +4,7 @@
 
 <script>
 export default {
-  cache: 'swr',
+  cache: true,
   asyncData () {
     return {
       renderedOn: new Date(),

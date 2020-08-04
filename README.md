@@ -1,4 +1,57 @@
-# SSR Cache (SWR) Demo
+# Nuxt.js SWR Cache
+
+This module adds in-memory SWR caching support to [nuxt.js](https://nuxtjs.org/) projects. (Experimental)
+
+## Usage
+
+Install package:
+
+```sh
+yarn add @pi0/nuxt-cache
+# or
+npm i @pi0/nuxt-cache
+```
+
+Add to `modules` section in `nuxt.config` file:
+
+```js
+export default {
+  modules: [
+    '@pi0/nuxt-cache'
+  ]
+}
+```
+
+For any page that you want to enable SWR, use `cache: true` in default export:
+
+`pages/index.vue`
+
+```vue
+<script>
+export default {
+  cache: true
+}
+</script>
+```
+
+## How it works?
+
+Using stale-while-revalidate, when making SSR request to pages module's middleware first checks if item is in cache or not, if cache is hit will be returned instantly so user won't need to wait for SSR process and will have much faster load time meanwhile in the background we fetch new version of the webpage so when reloading it will be updated (TODO: auto reload client)
+
+## SSR Remarks
+
+You have to ensure there is no shared state for pages with cache enabled like reading headers for authentication otherwise it will lead to **security issues**.
+
+## Alternatives
+
+- [nuxt-ssr-cache](https://github.com/arash16/nuxt-ssr-cache)
+- [SPR with Vercel](https://github.com/nuxt/vercel-builder/issues/37#issuecomment-489409731)
+
+## Roadmap
+
+Please see [Project](https://github.com/pi0/nuxt-swr-cache/projects/1). Making PRs for `TODO` items and suggestions are more than welcome!
+
+## Benchmarks
 
 **Without module:**
 
@@ -17,7 +70,7 @@
 └───────────┴────────┴────────┴─────────┴─────────┴─────────┴────────┴────────┘
 ```
 
-**SWR/1sec expiration:**
+**SWR/1sec expiration:** (module default)
 
 ```
 ┌─────────┬──────┬──────┬───────┬──────┬─────────┬─────────┬──────────┐
@@ -50,3 +103,7 @@
 │ Bytes/Sec │ 14.8 MB │ 14.8 MB │ 25.6 MB │ 26.2 MB │ 24.4 MB  │ 3.17 MB │ 14.8 MB │
 └───────────┴─────────┴─────────┴─────────┴─────────┴──────────┴─────────┴─────────┘
 ```
+
+## License
+
+MIT
