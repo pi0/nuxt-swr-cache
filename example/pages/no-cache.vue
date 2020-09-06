@@ -4,6 +4,7 @@
 
 <script>
 export default {
+  cache: false,
   asyncData () {
     return {
       renderedOn: new Date(),

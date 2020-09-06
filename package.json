@@ -8,7 +8,7 @@
   ],
   "scripts": {
     "build": "nuxt build",
-    "dev": "DEBUG=1 nuxt dev",
+    "dev": "DEBUG=1 nuxt dev example",
     "start": "nuxt start",
     "lint": "eslint --ext .vue --ext .js .",
     "test": "yarn lint",
