@@ -1,14 +1,12 @@
 const { resolve } = require('path')
+const { totalmem } = require('os')
 const etag = require('etag')
-
-const debug = process.env.DEBUG ? (url, ...args) => {
-  // eslint-disable-next-line no-console
-  console.log(`[${url}]`, ...args)
-} : () => { }
+const algo = require('./algorithm')
+const { debug } = require('./utils')
 
 module.exports = function (moduleOptions) {
   // route => { url, date, strategy, hash, html, stale }
-  const cacheItems = {}
+  const cacheItems = new Map()
 
   this.options.nuxtCache = {
     ...(this.options.nuxtCache || {}),
@@ -17,8 +15,7 @@ module.exports = function (moduleOptions) {
 
   const global = this.options.nuxtCache.global
   const expirationMultiplicator = this.options.nuxtCache.expiration || 5
-
-  debug('you declare you want all pages being cache', global)
+  const memory = this.options.nuxtCache.memory || 0
 
   this.addPlugin({
     src: resolve(__dirname, 'cache.server.js'),
@@ -46,7 +43,7 @@ module.exports = function (moduleOptions) {
   }
 
   this.options.serverMiddleware.unshift((req, res, next) => {
-    const cacheItem = cacheItems[req.url]
+    const cacheItem = cacheItems.get(req.url)
     if (!cacheItem) {
       return next()
     }
@@ -60,7 +57,7 @@ module.exports = function (moduleOptions) {
         updateInBackground(cacheItem)
         return res.end(cacheItem.html)
       } else {
-        delete cacheItems[req.url]
+        cacheItems.delete(req.url)
         return next()
       }
     }
@@ -74,8 +71,15 @@ module.exports = function (moduleOptions) {
 
     const hash = etag(JSON.stringify(context.nuxt))
     const { req } = context
+    const heapUsed = process.memoryUsage().heapUsed / 1024 / 1024
+    const heapTotal = totalmem() / 1024 / 1024
+    const convertToMB = Math.round(heapUsed * 100) / 100
+    const memoryTotalMbAvailable = Math.round(heapTotal * 100) / 100
 
-    const cacheItem = cacheItems[req.url] = {
+    debug(`${convertToMB} MB memory used`)
+    debug(`${memoryTotalMbAvailable} MB memory available`)
+
+    const cacheItem = {
       url: req.url,
       date: Date.now(),
       maxAge: expirationMultiplicator,
@@ -83,6 +87,11 @@ module.exports = function (moduleOptions) {
       hash,
       html
     }
+
+    if (memory > 0 && (convertToMB >= memory - 100 || convertToMB >= memoryTotalMbAvailable - 100)) { algo.exec(cacheItems) }
+
+    cacheItems.set(req.url, cacheItem)
+
     debug(cacheItem.url, 'Cache item created')
   })
 }
