@@ -34,6 +34,45 @@ export default {
 </script>
 ```
 
+If you to cache every pages add:
+
+Add in `nuxt.config` file:
+
+```js
+export default {
+  modules: [
+    '@pi0/nuxt-cache'
+  ],
+  nuxtCache: {
+    global: true
+  }
+}
+```
+
+or 
+
+```js
+export default {
+  modules: [
+    ['@pi0/nuxt-cache', {
+      global: true
+    }]
+  ],
+}
+```
+
+From here you can disable pages for being cached by
+
+`pages/second.vue`
+
+```vue
+<script>
+export default {
+  cache: false
+}
+</script>
+```
+
 ## How it works?
 
 Using stale-while-revalidate, when making SSR request to pages module's middleware first checks if item is in cache or not, if cache is hit will be returned instantly so user won't need to wait for SSR process and will have much faster load time meanwhile in the background we fetch new version of the webpage so when reloading it will be updated (TODO: auto reload client)
