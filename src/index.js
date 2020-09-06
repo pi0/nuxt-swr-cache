@@ -1,12 +1,12 @@
 const { resolve } = require('path')
 const { totalmem } = require('os')
 const etag = require('etag')
-const algo = require('./algorithm')
+const lru = require('./algorithm')
 const { debug } = require('./utils')
 
 module.exports = function (moduleOptions) {
   // route => { url, date, strategy, hash, html, stale }
-  const cacheItems = new Map()
+  const cacheItems = {}
 
   this.options.nuxtCache = {
     ...(this.options.nuxtCache || {}),
@@ -43,7 +43,7 @@ module.exports = function (moduleOptions) {
   }
 
   this.options.serverMiddleware.unshift((req, res, next) => {
-    const cacheItem = cacheItems.get(req.url)
+    const cacheItem = cacheItems[req.url]
     if (!cacheItem) {
       return next()
     }
@@ -57,7 +57,7 @@ module.exports = function (moduleOptions) {
         updateInBackground(cacheItem)
         return res.end(cacheItem.html)
       } else {
-        cacheItems.delete(req.url)
+        delete cacheItems[req.url]
         return next()
       }
     }
@@ -79,7 +79,7 @@ module.exports = function (moduleOptions) {
     debug(`${convertToMB} MB memory used`)
     debug(`${memoryTotalMbAvailable} MB memory available`)
 
-    const cacheItem = {
+    const cacheItem = cacheItems[req.url] = {
       url: req.url,
       date: Date.now(),
       maxAge: expirationMultiplicator,
@@ -88,9 +88,7 @@ module.exports = function (moduleOptions) {
       html
     }
 
-    if (memory > 0 && (convertToMB >= memory - 100 || convertToMB >= memoryTotalMbAvailable - 100)) { algo.exec(cacheItems) }
-
-    cacheItems.set(req.url, cacheItem)
+    if (memory > 0 && (convertToMB >= memory - 100 || convertToMB >= memoryTotalMbAvailable - 100)) { lru(cacheItems) }
 
     debug(cacheItem.url, 'Cache item created')
   })
